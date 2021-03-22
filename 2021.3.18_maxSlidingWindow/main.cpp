@@ -10,6 +10,9 @@
 
 using namespace std;
 
+//方法1：使用队列及顺序列表，通过队列记录滑动窗口中的数据，顺序列表记录滑动窗口中数据大小顺序，以此实现滑动窗口中最大或最小值输出。
+//方法2：每次从数组中读入滑动窗口显示数据个数，并找出最大值。
+//滑动窗口较宽时，方法1效率较高，本例中使用方法1。
 
 //insert and erase elements keep the order by minimum to maximum. Equivalent elements remain in list order. 
 //before insert and erase elements should using the STL function list.sort() for sort elements first.
@@ -51,6 +54,11 @@ bool listInsertByOrder(const int insrtNum, const int eraseNum, list<int> &oderLi
     while(iter != oderList.end())
     {
         //std::cout << "listInsertByOrder item: " << *iter << std::endl;
+        if(bInserted && bErased)
+        {
+            break; //insert and erase both done, break the finding loop.
+        }
+
         if(*iter >= insrtNum && !bInserted)
         {
             iter = oderList.insert(iter, insrtNum);
