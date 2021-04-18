@@ -24,18 +24,17 @@ int lengthOfLongestSubstring(string s)
     auto iter = s.begin();
     while(iter != s.end())
     {
-        if(maxSize < curSubStr.size())
-        {
-            maxSize = curSubStr.size();
-        }
-
         string::size_type index = curSubStr.find(*iter);
         if(index != s.npos) //fully loaded the num into list and queue first;
         {
             curSubStr = curSubStr.substr((index + 1), (curSubStr.size() - index));
         }
         curSubStr += *iter;
-        ++iter; //sliding window move to next position
+        if(maxSize < curSubStr.size())
+        {
+            maxSize = curSubStr.size();
+        }
+        ++iter; //move to next position
     }
     return maxSize;
 }
