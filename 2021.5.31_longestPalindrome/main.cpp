@@ -64,13 +64,13 @@ string longestPalindrome2(string strInput)
         dp[i][i] = true;
     }
     // 递推开始
-    // 扫面字串
+    // 枚举子字串，长度2~len，枚举自底向顶，保证迭代依赖值已知
     for (int L = 2; L <= len; ++L) 
     {
         // i 枚举左边界, j 枚举右边界；循环枚举当前子串长度中所有可能的回文，即区间[i, ]
         for (int i = 0; i < len; ++i)
         {
-            // 由 L 和 i 可以确定右边界，即 j - i + 1 = L 得，
+            // 由 L 和 i 可以确定右边界，即 j - i + 1 = L 得，维持总长度为子串长度
             int j = L + i - 1;
             // 如果右边界越界，就可以退出当前循环
             if (j >= len) 
