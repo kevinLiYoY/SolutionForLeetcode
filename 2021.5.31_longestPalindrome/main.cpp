@@ -10,86 +10,99 @@
 
 using namespace std;
 
-//方法1：使用栈及顺序列表，通过栈记录当前已录入的数据，顺序列表作为当前字串顺序，以此实现最大回文字串输出。
+//方法1：中心拓展法。
 
-bool duplicateCharCheck(const char item, std::stack<char> &oderList)
+//方法2： 使用动态规划，完成最大回文扫描。
+
+pair<int, int> expandAroundCenter(const string& s, int left, int right)
 {
-    if(!oderList.empty())
+    while (left >= 0 && right < s.size() && s[left] == s[right])
     {
-        const char lastItem = oderList.top();
-        std::cout << " last item: " << lastItem << " check item: " << item << std::endl;
-
-        if(lastItem == item)
-        {
-            return true;
-        }
+        --left;
+        ++right;
     }
-    return false;
+    return {left + 1, right - 1};
 }
 
 string longestPalindrome(string strInput)
 {
-    string maxResult("");
-    if(strInput.empty())
+    int start = 0, end = 0;
+    for (int i = 0; i < strInput.size(); ++i)
     {
-        return maxResult;
+        auto [left1, right1] = expandAroundCenter(strInput, i, i);
+        auto [left2, right2] = expandAroundCenter(strInput, i, i + 1);
+        if (right1 - left1 > end - start)
+        {
+            start = left1;
+            end = right1;
+        }
+        if (right2 - left2 > end - start)
+        {
+            start = left2;
+            end = right2;
+        }
     }
-    maxResult.push_back(*(strInput.begin()));
-    list<char> tmpList;
-    std::stack<char> oderList;
-    auto iter = strInput.begin();
-    while(iter != strInput.end())
+    return strInput.substr(start, end - start + 1);
+}
+
+//动态规划方法，取自解答，用于学习
+string longestPalindrome2(string strInput)
+{
+    const size_t len = strInput.size();
+    if(len < 2)
     {
-        bool isDuplicateChar = duplicateCharCheck(*iter, oderList);
-        if(isDuplicateChar)
-        {
-            oderList.pop();
-            if(tmpList.back() == *iter)
-            {
-                tmpList.pop_back();
-            }
-            tmpList.push_back(*iter);
-            tmpList.push_front(*iter);
-        }
-        else
-        {
-            if(tmpList.size() > maxResult.size())
-            {
-                std::cout << "before maxResult1: " << maxResult << std::endl;
-                maxResult.clear();
-                maxResult.assign(tmpList.begin(), tmpList.end());
-                std::cout << "after maxResult2: " << maxResult << std::endl;
-                std::stack<char>().swap(oderList); //clearStack
-            }
-            tmpList.clear();
-            if(!oderList.empty())
-            {
-                tmpList.push_back(*iter);
-            }
-            //check next
-            isDuplicateChar = duplicateCharCheck(*(iter + 1), oderList);
-            if(isDuplicateChar)
-            {
-                ++iter;
-                continue;
-            }
-            oderList.push(*iter);
-        }
-        ++iter;
+        return strInput;
     }
 
-    if(!tmpList.empty())
+    int maxLen = 1;
+    int begin = 0;
+    // dp[i][j] 表示 s[i..j] 是否是回文串
+    vector<vector<int>> dp(len, vector<int>(len));
+    // 初始化：所有长度为 1 的子串都是回文串
+    for (int i = 0; i < len; ++i)
     {
-        if(tmpList.size() > maxResult.size())
-        {
-            std::cout << "before maxResult: " << maxResult << std::endl;
-            maxResult.clear();
-            maxResult.assign(tmpList.begin(), tmpList.end());
-            std::cout << "after maxResult: " << maxResult << std::endl;
-        }
-        tmpList.clear();
+        dp[i][i] = true;
     }
-    return maxResult;
+    // 递推开始
+    // 扫面字串
+    for (int L = 2; L <= len; ++L) 
+    {
+        // i 枚举左边界, j 枚举右边界；循环枚举当前子串长度中所有可能的回文，即区间[i, ]
+        for (int i = 0; i < len; ++i)
+        {
+            // 由 L 和 i 可以确定右边界，即 j - i + 1 = L 得，
+            int j = L + i - 1;
+            // 如果右边界越界，就可以退出当前循环
+            if (j >= len) 
+            {
+                break;
+            }
+
+            if (strInput[i] != strInput[j])
+            {
+                dp[i][j] = false;
+            }
+            else
+            {
+                if (j - i < 3)
+                {
+                    dp[i][j] = true;
+                }
+                else 
+                {
+                    dp[i][j] = dp[i + 1][j - 1];
+                }
+            }
+
+            // 只要 dp[i][L] == true 成立，就表示子串 s[i..L] 是回文，此时记录回文长度和起始位置
+            if (dp[i][j] && j - i + 1 > maxLen)
+            {
+                maxLen = j - i + 1;
+                begin = i;
+            }
+        }
+    }
+    return strInput.substr(begin, maxLen);
 }
 
 int main()
@@ -107,6 +120,9 @@ int main()
 
         string longest = longestPalindrome(input);
         std::cout << "****************************************************Result: " << longest << std::endl;
+
+        longest = longestPalindrome2(input);
+        std::cout << "****************************************************Result2: " << longest << std::endl;
     }
 
     return 0;
