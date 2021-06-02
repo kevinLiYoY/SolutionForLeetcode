@@ -29,8 +29,8 @@ string longestPalindrome(string strInput)
     int start = 0, end = 0;
     for (int i = 0; i < strInput.size(); ++i)
     {
-        auto [left1, right1] = expandAroundCenter(strInput, i, i);
-        auto [left2, right2] = expandAroundCenter(strInput, i, i + 1);
+        auto [left1, right1] = expandAroundCenter(strInput, i, i);  //取一个字符开始向两边扩展，应对有对称中心的情形，例如如下字符中的‘d’: ada
+        auto [left2, right2] = expandAroundCenter(strInput, i, i + 1);  //取两个相邻字符开始向两边扩展，应对无对称中心情形，例如如下字符：abba
         if (right1 - left1 > end - start)
         {
             start = left1;
