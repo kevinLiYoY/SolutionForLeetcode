@@ -127,7 +127,7 @@ int main()
         getline(cin, input);
         if((input == "E") || (input == "e"))
         {
-        break;
+            break;
         }
         std::cout << "Please input a number for the width of sliding window." << std::endl;
         int k = 0;
