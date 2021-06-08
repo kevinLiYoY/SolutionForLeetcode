@@ -6,12 +6,16 @@
 #include <list>
 #include <vector>
 #include <cmath>
+#include <unordered_map>
 #include <sstream>
+#include <algorithm>
+#include <limits.h>
 
 using namespace std;
 
 //方法1：使用库函数sstream 实现类型转换
 //方法2：不使用库函数，实现类型转换
+//方法3：自动机（官方解答）
 
 void Trim(string &str)//去掉数字无关字符
 {
@@ -242,6 +246,54 @@ double myAtoi2(string input) //支持小数点版本（拓展）
     return result;
 }
 
+//方法3，自动机
+/***********************************
+ * 自动机对照表
+' '	    +/-	    number	    other
+start	signed	in_number	end
+***********************************/
+class Automaton {
+    string state = "start";
+    std::unordered_map<string, vector<string>> table =
+    {
+        {"start",       {"start",   "signed",   "in_number",    "end"}},
+        {"signed",      {"end",     "end",      "in_number",    "end"}},
+        {"in_number",   {"end",     "end",      "in_number",    "end"}},
+        {"end",         {"end",     "end",      "end",          "end"}}
+    };
+
+    int get_col(char c)
+    {
+        if (isspace(c)) return 0;
+        if (c == '+' || c == '-') return 1;
+        if (isdigit(c)) return 2;
+        return 3;
+    }
+public:
+    int sign = 1;
+    long long ans = 0;
+
+    void get(char c)
+    {
+        state = table[state][get_col(c)];
+        if (state == "in_number")
+        {
+            ans = ans * 10 + c - '0';
+            ans = (sign == 1) ? min(ans, (long long)INT_MAX) : min(ans, -(long long)INT_MIN);
+        }
+        else if (state == "signed")
+            sign = (c == '+') ? 1 : -1;
+    }
+};
+
+int myAtoi3(string str) {
+        Automaton automaton;
+        for (char c : str)
+            automaton.get(c);
+        return automaton.sign * automaton.ans;
+    }
+
+
 int main()
 {
     string input;
@@ -260,6 +312,9 @@ int main()
 
         double dresult = myAtoi2(input);
         std::cout << "****************************************************Result2: " << dresult << std::endl;
+
+        result = myAtoi3(input);
+        std::cout << "****************************************************Result3: " << result << std::endl;
     }
 
     return 0;
