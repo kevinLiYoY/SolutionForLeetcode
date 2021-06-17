@@ -42,6 +42,18 @@ class MyRegex
         StrType m_strType;
     };
 
+    struct strDynamic
+    {
+        strDynamic(string characters, int regexSymbolIndex)
+            :m_characters(characters)
+            ,m_regexSymbolIndex(regexSymbolIndex)
+        {
+
+        }
+        string m_characters;
+        int m_regexSymbolIndex;
+    };
+
 public:
     MyRegex(string str)
         :m_regex(str)
@@ -53,8 +65,9 @@ public:
     {
         string::size_type curPosition = 0;
         bool bHasDynamic = false;
-        std::stack<string> strDynamic;
-        for(int i = 0; i < m_regexSymbol.size(); ++i)
+        string strTmp;
+        std::stack<strDynamic> listStrDynamic;
+        for(int i = 0; i < m_regexSymbol.size(); ++i) //第一轮匹配
         {
             switch(m_regexSymbol.at(i).m_strType)
             {
@@ -67,23 +80,18 @@ public:
                 }
                 break;
             case StrType::eACharGreaterThan0:
-            { 
-                if(bHasDynamic)
-                {
-                    curPosition = strInput.find_last_of((m_regexSymbol.at(i).m_characters).at(0));
-                    bHasDynamic = false;
-                }
-                else
-                {
-                    curPosition = strInput.find((m_regexSymbol.at(i).m_characters).at(0));
-                    if(curPosition != 0)
-                    {
-                        return false;
-                    }
-                }
-
+            {
+                curPosition = strInput.find((m_regexSymbol.at(i).m_characters).at(0));
                 if(curPosition != string::npos)
                 {
+                    if(!bHasDynamic)
+                    {
+                        if(curPosition != 0)
+                        {
+                            return false;
+                        }
+                    }
+                
                     if((curPosition + 1) < strInput.size())
                     {
                         strInput = strInput.substr(curPosition + 1, (strInput.size() - curPosition - 1));
@@ -98,7 +106,33 @@ public:
                         strInput = strInput.substr(1, (strInput.size() - 1));
                     }
                 }
-                
+                if(bHasDynamic) //当前位置存在通配符，栈存所有可能的匹配位置
+                {
+                    strTmp = strInput;
+                    while(1)
+                    {
+                        curPosition = strTmp.find((m_regexSymbol.at(i).m_characters).at(0));
+                        if(curPosition != string::npos)
+                        {
+                            listStrDynamic.push(strDynamic(strTmp, i));
+                            //std::cout << "listStrDynamic push: " << strTmp << " index: " << i << std::endl;
+                            if((curPosition + 1) < strTmp.size())
+                            {
+                                strTmp = strTmp.substr(curPosition + 1, (strTmp.size() - curPosition - 1));
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    
+                    bHasDynamic = false;
+                }
                 break;
             }
             case StrType::eOneChar:
@@ -113,14 +147,9 @@ public:
             }
             case StrType::eStaticStr:
             {
-                if(bHasDynamic)
+                curPosition = strInput.find(m_regexSymbol.at(i).m_characters);
+                if(!bHasDynamic)
                 {
-                    curPosition = strInput.find_last_of(m_regexSymbol.at(i).m_characters);
-                    bHasDynamic = false;
-                }
-                else
-                {
-                    curPosition = strInput.find(m_regexSymbol.at(i).m_characters);
                     if(curPosition != 0)
                     {
                         return false;
@@ -129,8 +158,17 @@ public:
                 
                 if(curPosition == string::npos)
                 {
+                    if(!listStrDynamic.empty())
+                    {
+                        strDynamic strDic = listStrDynamic.top();
+                        listStrDynamic.pop();
+                        strInput = strDic.m_characters;
+                        i = strDic.m_regexSymbolIndex;
+                        continue;
+                    }
                     return false;
                 }
+
                 if((curPosition + m_regexSymbol.at(i).m_characters.size()) < strInput.size())
                 {
                     strInput = strInput.substr(curPosition + m_regexSymbol.at(i).m_characters.size(), (strInput.size() - curPosition - m_regexSymbol.at(i).m_characters.size()));
@@ -140,6 +178,34 @@ public:
                     strInput.clear();
                     return true;
                 }
+
+                if(bHasDynamic) //当前位置存在通配符，栈存所有可能的匹配位置
+                {
+                    strTmp = strInput;
+                    while(1)
+                    {
+                        curPosition = strTmp.find(m_regexSymbol.at(i).m_characters);
+                        if(curPosition != string::npos)
+                        {
+                            listStrDynamic.push(strDynamic(strTmp, i));
+                            //std::cout << "listStrDynamic push: " << strTmp << " index: " << i << std::endl;
+                            if((curPosition + 1) < strTmp.size())
+                            {
+                                strTmp = strTmp.substr(curPosition + 1, (strTmp.size() - curPosition - 1));
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    
+                    bHasDynamic = false;
+                }
                 break;
             }
             default:
@@ -148,8 +214,120 @@ public:
 
             //std::cout << "strInput: " << strInput << " regexSymbol: " << m_regexSymbol.at(i).m_characters << " Type: " << m_regexSymbol.at(i).m_strType << std::endl;
         }
+
         if(!strInput.empty())
         {
+            while(true) //第一轮未匹配成功，检索栈存中所有可能的匹配位置进行第二轮匹配尝试
+            {
+                if(listStrDynamic.empty())
+                {
+                    break;
+                }
+                strDynamic strDic = listStrDynamic.top();
+                listStrDynamic.pop();
+                strInput = strDic.m_characters;
+                bHasDynamic = true;
+                for(int i = strDic.m_regexSymbolIndex; i < m_regexSymbol.size(); ++i)
+                {
+                    switch(m_regexSymbol.at(i).m_strType)
+                    {
+                    case StrType::eAllCharGreaterThan0:
+                        bHasDynamic = true;
+                        if(i == (m_regexSymbol.size() - 1))
+                        {
+                            strInput.clear();
+                            return true;
+                        }
+                        break;
+                    case StrType::eACharGreaterThan0:
+                    {
+                        curPosition = strInput.find((m_regexSymbol.at(i).m_characters).at(0));
+                        if(!bHasDynamic)
+                        {
+                            if(curPosition != 0)
+                            {
+                                return false;
+                            }
+                        }
+
+                        if(curPosition != string::npos)
+                        {
+                            if((curPosition + 1) < strInput.size())
+                            {
+                                strInput = strInput.substr(curPosition + 1, (strInput.size() - curPosition - 1));
+                            }
+                            else
+                            {
+                                strInput.clear();
+                                return true;
+                            }
+                            while((strInput.size() != 0) && (strInput.at(0) == (m_regexSymbol.at(i).m_characters).at(0)))
+                            {
+                                strInput = strInput.substr(1, (strInput.size() - 1));
+                            }
+                        }
+                        if(bHasDynamic)
+                        {
+                            bHasDynamic = false;
+                        }
+                        break;
+                    }
+                    case StrType::eOneChar:
+                    {
+                        if(bHasDynamic)
+                        {
+                            break;
+                        }
+                        strInput = strInput.substr(1, (strInput.size() - 1));
+                        
+                        break;
+                    }
+                    case StrType::eStaticStr:
+                    {
+                        curPosition = strInput.find(m_regexSymbol.at(i).m_characters);
+                        if(!bHasDynamic)
+                        {
+                            if(curPosition != 0)
+                            {
+                                return false;
+                            }
+                        }
+                        
+                        if(curPosition == string::npos)
+                        {
+                            if(!listStrDynamic.empty())
+                            {
+                                strDynamic strDic = listStrDynamic.top();
+                                listStrDynamic.pop();
+                                strInput = strDic.m_characters;
+                                i = strDic.m_regexSymbolIndex;
+                                continue;
+                            }
+                            return false;
+                        }
+                        if((curPosition + m_regexSymbol.at(i).m_characters.size()) < strInput.size())
+                        {
+                            strInput = strInput.substr(curPosition + m_regexSymbol.at(i).m_characters.size(), (strInput.size() - curPosition - m_regexSymbol.at(i).m_characters.size()));
+                        }
+                        else
+                        {
+                            strInput.clear();
+                            return true;
+                        }
+
+                        if(bHasDynamic)
+                        {
+                            bHasDynamic = false;
+                        }
+                        break;
+                    }
+                    default:
+                        break;
+                    }
+
+                    //std::cout << "***********strInput: " << strInput << " regexSymbol: " << m_regexSymbol.at(i).m_characters << " Type: " << m_regexSymbol.at(i).m_strType << std::endl;
+                }
+            }
             return false;
         }
         return true;
