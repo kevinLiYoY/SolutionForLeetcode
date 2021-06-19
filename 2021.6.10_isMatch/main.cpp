@@ -58,7 +58,7 @@ public:
     MyRegex(string str)
         :m_regex(str)
     {
-        getRegexSymbol();
+        regexSymbolPhrase();
     }
 
     bool isMatch(string strInput) //正则规则匹配
@@ -334,7 +334,7 @@ public:
     }
 
 private:
-    void getRegexSymbol() //分解正则表达式规则
+    void regexSymbolPhrase() //分解正则表达式规则
     {
         string strTmp;
         for (char c : m_regex)
