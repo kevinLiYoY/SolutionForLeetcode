@@ -129,7 +129,7 @@ int main()
         {
             break;
         }
-        std::cout << "Please input a number for the width of sliding window." << std::endl;
+        std::cout << "Please input an number for the width of sliding window." << std::endl;
         int k = 0;
         std::cin >> k;
         cin.ignore();

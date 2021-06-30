@@ -41,7 +41,7 @@ private:
         {'M',   1000}
     };
 
-    int get_col(char c)
+    int get_col(char c) //获取当前字符对应的数字
     {
         int last = m_iCur;
         auto iter = table.find(c);
@@ -49,7 +49,7 @@ private:
         {
             m_iCur = iter->second;
             //std::cout << "last: " << last <<" cur: " << m_iCur << std::endl;
-            if(m_iCur > last)
+            if(m_iCur > last) //通常情况下，罗马数字中小的数字在大的数字的右边。但也存在特例,即当前数值大于上一次取值时，需特殊处理，如IV表示 V - I = 4
             {
                 m_iCur = m_iCur - (2 * last);
             }

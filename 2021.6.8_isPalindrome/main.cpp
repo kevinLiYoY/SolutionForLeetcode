@@ -76,7 +76,7 @@ int main()
             break;
         }
 
-        std::cout << "Please input a number here: " << std::endl;
+        std::cout << "Please input an number here: " << std::endl;
         int row = 0;
         std::cin >> row;
         cin.ignore();

@@ -41,7 +41,7 @@ int main()
         {
             break;
         }
-        std::cout << "Please input a number for the target of two number sum." << std::endl;
+        std::cout << "Please input an number for the target of two number sum." << std::endl;
         int k = 0;
         std::cin >> k;
         cin.ignore();
