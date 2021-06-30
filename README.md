@@ -15,3 +15,4 @@ Index of all the Leetcode Contents:
 2021.6.19_maxArea                   盛最多水的容器
 2021.6.24_romanToInt                罗马数字转整数
 2021.6.28_intToRoman                整数转罗马数字
+2021.6.30_longestCommonPrefix       最长公共前缀
