@@ -53,6 +53,10 @@ string longestCommonPrefix(vector<string>& strs)
         {
             result = getComonPre(result, strSecond);
         }
+        if(result.empty())
+        {
+            break;
+        }
     }
     return result;
 }
