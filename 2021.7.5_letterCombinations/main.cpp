@@ -30,7 +30,7 @@ public:
     }
 
 private:
-    std::map<char, string> g_table = 
+    std::map<char, string> m_table = 
     {
         {'0',     ""},
         {'1',     ""},
@@ -49,8 +49,8 @@ private:
         //std::cout<< "m_index:" << m_index << " digit:" << digits.at(m_index) << std::endl;
         if(m_index < (digits.size() - 1))
         {
-            std::map<char, string>::iterator iterTab = g_table.find(digits.at(m_index));
-            if(iterTab != g_table.end())
+            std::map<char, string>::iterator iterTab = m_table.find(digits.at(m_index));
+            if(iterTab != m_table.end())
             {
                 string characters = iterTab->second;
                 //std::cout<< "character0:" << characters << std::endl;
@@ -59,7 +59,7 @@ private:
                     m_strResult.push_back(characters.at(i));
                     //std::cout<< "char0:" << characters.at(i) << " m_strResult:" << m_strResult << std::endl;
                     ++m_index;
-                    pickList(digits, result);
+                    pickList(digits, result); //递归调用
                 }
                 if(!m_strResult.empty())
                 {
@@ -71,10 +71,10 @@ private:
                 }
             }
         }
-        else if(m_index == (digits.size() - 1))
+        else if(m_index == (digits.size() - 1)) //递归退出条件
         {
-            std::map<char, string>::iterator iterTab = g_table.find(digits.at(m_index));
-            if(iterTab != g_table.end())
+            std::map<char, string>::iterator iterTab = m_table.find(digits.at(m_index));
+            if(iterTab != m_table.end())
             {
                 string characters = iterTab->second;
                 //std::cout<< "character1:" << characters << std::endl;
