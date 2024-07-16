@@ -5,149 +5,16 @@
 #include <stack>
 #include <vector>
 #include <map>
+#include <cmath>
 #include <sstream>
 #include <algorithm> //std::all_of
 #include <cctype> //std::isdigital
 
 using namespace std;
 
-//input the parsed substring and calculate then output the result as a long type. eg: input 2+3, return 5;
-long calculateParsed(string str)
-{
-    std::cout << "calculateParsed: " << str << std::endl;
-    string subStr;
-    string subType;
-    vector<string> items;
-    auto iter = str.begin();
-    while (iter != str.end())
-    {
-        switch (*iter)
-        {
-        case '+':
-        case '-':
-            subType = *iter;
-            items.push_back(subType);
-            break;
-        default:
-            subStr += *iter;
-            if(((iter + 1) == str.end()) || (*(iter + 1) == '+') || (*(iter + 1) == '-'))
-            {
-                items.push_back(subStr);
-                subStr.clear();
-            }
-            break;
-        }
-        
-        ++iter;
-    }
-
-    stringstream strStream;
-    long first = 0;
-    long second = 0;
-    auto iterVec = items.begin();
-    strStream << *iterVec;
-    strStream >> first;
-    while(iterVec != items.end())
-    {
-        if(*iterVec == "+")
-        {
-            strStream.clear();
-            strStream << *(++iterVec);
-            strStream >> second;
-            first += second;
-            continue;
-        }
-        else if(*iterVec == "-")
-        {
-            strStream.clear();
-            strStream << *(++iterVec);
-            strStream >> second;
-            first -= second;
-            continue;
-        }
-
-        ++iterVec;
-    }
-    return first;
-}
-
-long calculate(string input)
-{
-    stack<string> mystack;
-    string subStr;
-    string subType;
-    long result = 0;
-    auto iter = input.begin();
-    while(iter != input.end())
-    {
-        if(*iter == '(')
-        {
-            subType = *iter;
-            mystack.push(subType);
-        }
-        else if(*iter == ')')
-        {
-            if(mystack.size() != 0)
-            {
-                if(mystack.top() != "(")
-                {
-                    subStr = mystack.top();
-                    mystack.pop();
-                    result = calculateParsed(subStr);
-                    if(mystack.size() != 0)
-                    {
-                        if(mystack.top() == "(")
-                        {
-                            mystack.pop();
-                        }
-                        if((mystack.size() != 0) && (mystack.top() != "("))
-                        {
-                            mystack.top() += to_string(result);
-                        }
-                        else
-                        {
-                            mystack.push(to_string(result));
-                        }
-                    }
-                    else
-                    {
-                        mystack.push(to_string(result));
-                    }
-                }
-                else
-                {
-                    mystack.pop();
-                }
-            }
-        }
-        else if(*iter == ' ')
-        {
-            //do nothing
-        }
-        else
-        {
-            if((mystack.size() != 0) && (mystack.top() != "("))
-            {
-                mystack.top() += *iter;
-            }
-            else
-            {
-                subStr = *iter;
-                mystack.push(subStr);
-            }
-        }
-        ++iter;
-    }
-
-    if(mystack.size() != 0)
-    {
-        result = calculateParsed(mystack.top());
-    }
-    return result;
-}
-
 std::string calculate(std::string &first, std::string &second, std::string &op)
 {
+    // std::cout << "first:" << first << ", second:" << second << ", op:" << op << std::endl;
     long lFirst = stol(first);
     long lSecond = stol(second);
     long result = 0;
@@ -170,7 +37,7 @@ std::string calculate(std::string &first, std::string &second, std::string &op)
     }
     else
     {
-        std::cout << "Operate did not support.";
+        std::cout << "Operate: " << op << " did not support.";
     }
 
     return std::to_string(result);
@@ -192,7 +59,9 @@ int main()
     //     std::cout << "Result: " << result << std::endl;
     // }
 
-    std::string strInput("1+2*(1+(14+5*2)-3)+( 6 + 8 ) + 1");
+    // std::string strInput("1+2*(1+(14+5*2)-3)+( 6 + 8 ) + 1");
+    // std::string strInput("1 + 2 * ( 12 * ( 3 * (5 * 2 + 2 * 2) - 3 )) + ( 3 * 6 * 1 - 2 ) * ( 2 + 2) + 1"); //括号内优先级暂未处理
+    std::string strInput("1 + 2 * ( 12 * ( 3 * ( 5 * 2 + 2 * 2 ) ) ) + ( 3 * 6 * 1 - 2 ) * ( 2 + 2) + 1");
     std::vector<std::string> valItem;
     std::string strTmp;
     auto it = strInput.begin();
@@ -226,41 +95,137 @@ int main()
         ++it;
     }
 
-    std::map<std::string, uint16_t> perforce = {{"+", 1}, {"-", 1}, {"*", 2}, {"/", 2}};
+    std::map<std::string, uint16_t> precedence = {{"+", 1}, {"-", 1}, {"*", 2}, {"/", 2}};
     std::stack<std::string> myStack;
     for(std::string &str : valItem)
     {
-        if(std::all_of(str.begin(), str.end(), std::isdigit))
+        std::cout << "itemVal:" << str << std::endl;
+        if(std::all_of(str.begin(), str.end(), ::isdigit))
         {
             if(myStack.size() != 0)
             {
-                auto item = perforce.find(myStack.top());
-                if(item != perforce.end())
+                auto item = precedence.find(myStack.top());
+                if(item != precedence.end())
                 {
                     std::string op = myStack.top();
-                    myStack.pop();
-                    std::string first = myStack.top();
-                    if(item->second == 2)
+                    if(item->second == 2) //高优先级先处理，低优先级待后续运算符解释后再决定是否执行运送，例如运输式：1+2*3，需解析到2*3先执行运输
                     {
-                        std::string ret = calculate(first, str, myStack.top());
+                        myStack.pop();
+                        std::string first = myStack.top(); //已排除以下情形：（1+2）+3，（1+2）+（3+2），（2+3）*（3+2），此时top一定是数字
+                        myStack.pop();
+                        std::cout << "000 first:" << first << ", second:" << str << ", op:" << op << std::endl;
+                        std::string res = calculate(first, str, op);
+                        std::cout << "000 res:" << res << std::endl;
+                        myStack.push(res); //运算结果先放回待运输栈中
                     }
+                    else
+                    {
+                        myStack.push(str); //低优先级运输式暂不处理
+                    }
+                }
+                else
+                {
+                    myStack.push(str); //非运输符或低优先级运输式暂不处理
                 }
             }
             else
             {
-                myStack.push(str);
+                myStack.push(str); //待运输栈中无运输符暂不处理
             }
         }
-        else if(str == ")")
+        else if(str == ")") //遇右括号，需将括号内容优先完整运算
         {
-            myStack.push(str);
+            if(myStack.size() != 0)
+            {
+                while(myStack.top() != "(") //直至找到左括号退出
+                {
+                    std::string second = myStack.top(); //此时top一定是数字
+                    myStack.pop();
+                    std::string op = myStack.top(); //一定是运算式
+                    myStack.pop();
+                    std::string first = myStack.top(); //此时top一定是数字
+                    myStack.pop();
+                    std::cout << "111 first:" << first << ", second:" << second << ", op:" << op << std::endl;
+                    std::string res = calculate(first, second, op);
+                    std::cout << "111 res:" << res << std::endl;
+                    if(myStack.top() == "(")
+                    {
+                        myStack.pop(); //移除左括号
+                        myStack.push(res); //运算结果先放回待运输栈中
+                        break;
+                    }
+                    else
+                    {
+                        myStack.push(res); //运算结果先放回待运输栈中
+                    }
+                }
+            }
         }
         else
         {
-            myStack.push(str);
+            myStack.push(str); //低优先级运算值，运算符及左括号暂存入待运算栈中
         }
-        std::cout << "val:" << str << std::endl;
     }
+
+    // while(myStack.size() != 0)
+    // {
+    //     std::cout << "top:" << myStack.top() << std::endl;
+    //     myStack.pop();
+    // }
+
+    std::stack<std::string> stackReversed;
+    while(myStack.size() != 0)
+    {
+        std::string second = myStack.top();
+        myStack.pop();
+        if(myStack.size() == 0)
+        {
+            stackReversed.push(second); //待运算栈反向
+            break;
+        }
+        std::string op = myStack.top(); //一定是运算式
+        myStack.pop();
+        auto item = precedence.find(op);
+        if(item != precedence.end())
+        {
+            if(item->second == 2) //高优先级先处理，低优先级待后续运算符解释后再决定是否执行运算，例如运输式：1+2*3，需解析到2*3先执行运输
+            {
+                std::string first = myStack.top(); //此时top一定是数字
+                myStack.pop();
+                std::cout << "222 first:" << first << ", second:" << second << ", op:" << op << std::endl;
+                std::string res = calculate(first, second, op);
+                std::cout << "222 res:" << res << std::endl;
+                myStack.push(res);
+                continue;
+            }
+        }
+        stackReversed.push(second); //待运算栈反向
+        stackReversed.push(op);
+    }
+
+    // while(stackReversed.size() != 0)
+    // {
+    //     std::cout << "top:" << stackReversed.top() << std::endl;
+    //     stackReversed.pop();
+    // }
+
+    //高优先级已处理，此处按顺序执行运算
+    while(stackReversed.size() > 1)
+    {
+        std::string first = stackReversed.top();
+        stackReversed.pop();
+        std::string op = stackReversed.top(); //一定是运算式
+        stackReversed.pop();
+        std::string second = stackReversed.top();
+        stackReversed.pop();
+        std::cout << "333 first:" << first << ", second:" << second << ", op:" << op << std::endl;
+        std::string res = calculate(first, second, op);
+        std::cout << "333 res:" << res << std::endl;
+        stackReversed.push(res);
+    }
+
+    long result = stol(stackReversed.top());
+    std::cout << "result:" << result << std::endl;
 
     return 0;
 }
