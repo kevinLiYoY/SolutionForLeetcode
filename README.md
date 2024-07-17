@@ -22,7 +22,8 @@ Index of all the Leetcode Contents:
 2023.2.10_RedBlueBall				模拟双色球摇号机
 2023.4.5_FindSubArray				和大于等于 target 的最短子数组
 2023.4.5_FindSubArrayCount			含有 k 个元素的组合
-
+2023.4.5_OpenUrlFile				打开给定文件中的URL路径图片
+2024.7.15_calculatePlus				可运算包含‘+’, ‘-’, ‘*’, ‘/’, '()' 等运算符组合的有效运算式
 
 VSCode编译命令参考：
 g++ -o Test.exe main.cpp
